@@ -1,19 +1,18 @@
 import React, {Component} from 'react';
-import {View, Text, Platform, Image, TouchableOpacity} from 'react-native';
+import {View, Text, Image, TouchableOpacity} from 'react-native';
 import {RNCamera as Camera} from 'react-native-camera';
-import Toast, {DURATION} from 'react-native-easy-toast';
+import Toast from 'react-native-easy-toast';
 
 import styles from './Styles';
-import OpenCV from '../../NativeModules/OpenCV';
 import CircleWithinCircle from '../../assets/svg/CircleWithinCircle';
 import {showToast} from '../../utils/Toast';
+import {checkForBlurryImage} from '../../utils/ImageUtils';
 
 export default class CameraScreen extends Component {
   constructor() {
     super();
     this.toast = React.createRef();
     this.takePicture = this.takePicture.bind(this);
-    this.checkForBlurryImage = this.checkForBlurryImage.bind(this);
     this.proceedWithCheckingBlurryImage = this.proceedWithCheckingBlurryImage.bind(
       this,
     );
@@ -45,29 +44,9 @@ export default class CameraScreen extends Component {
     }
   }
 
-  checkForBlurryImage(imageAsBase64) {
-    return new Promise((resolve, reject) => {
-      if (Platform.OS === 'android') {
-        OpenCV.checkForBlurryImage(
-          imageAsBase64,
-          (error) => {
-            // error handling
-          },
-          (msg) => {
-            resolve(msg);
-          },
-        );
-      } else {
-        OpenCV.checkForBlurryImage(imageAsBase64, (error, dataArray) => {
-          resolve(dataArray[0]);
-        });
-      }
-    });
-  }
-
   proceedWithCheckingBlurryImage(content) {
     return new Promise((resolve, reject) => {
-      this.checkForBlurryImage(content)
+      checkForBlurryImage(content)
         .then((blurryPhoto) => {
           if (blurryPhoto) {
             showToast('Photo is blurred!');

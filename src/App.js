@@ -26,7 +26,7 @@ const App = () => {
           <Stack.Screen
             name="Home"
             component={HomeScreen}
-            options={{title: 'Welcome'}}
+            options={{title: 'Sudoku Solver'}}
           />
           <Stack.Screen name="Camera" component={CameraScreen} />
         </Stack.Navigator>
