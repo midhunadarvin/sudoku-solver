@@ -1,9 +1,14 @@
 package com.reactlibrary;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeMap;
+import com.google.gson.GsonBuilder;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -110,61 +115,30 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
             byte[] decodedString = Base64.decode(imageAsBase64, Base64.DEFAULT);
             Bitmap image = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
-
-            Mat originalImage = new Mat();
-            Utils.bitmapToMat(image, originalImage);
-
+            ImageManipulation imgManip = new ImageManipulation(reactContext, image);
             Mat resultImage = new Mat();
-            resultImage = ImageManipUtils.convertToGrayScale(originalImage);
+            resultImage = ImageManipUtils.bitmapToMat(image);
+            resultImage = ImageManipUtils.convertToGrayScale(resultImage);
             resultImage = ImageManipUtils.applyGausianBlur(resultImage);
-            resultImage = ImageManipUtils.applyAdaptiveThreshold(resultImage);
+            resultImage = ImageManipUtils.adaptiveThreshold(resultImage);
             resultImage = ImageManipUtils.applyBitwiseNot(resultImage);
 
-//            Mat edges = new Mat(originalImage.size(), originalImage.type());
-//            Imgproc.Canny(originalImage, edges, 50, 200);
+            int[][] grid = imgManip.getSudokuGridNums();
+            Bitmap bitmapImage = ImageManipUtils.convertMatToBitmap(resultImage);
+            String imageBase64 = ImageManipUtils.convertToBase64(bitmapImage);
+            ImageScanResponse result = new ImageScanResponse(grid, resultImage, imageBase64);
+            successCallback.invoke(result.toJsonString());
+//            Mat resultImage = response.getResultImage();
+//            if (!resultImage.empty()) {
+//                /* Give Base64 Image Back */
+//                Bitmap bitmapImage = ImageManipUtils.convertMatToBitmap(resultImage);
+//                String imageBase64 = ImageManipUtils.convertToBase64(bitmapImage);
+//                ImageScanResponse result = new ImageScanResponse(response.getGrid(), response.getResultImage(), imageBase64);
+//                successCallback.invoke(result.toJsonString());
+//            } else {
+//                errorCallback.invoke("Unsupported Image");
+//            }
 
-            // trim external noise to localize the sudoku puzzle and stores in bmp
-            // then m2
-//            int[] bounds = ImageManipUtils.findGridBounds(edges);
-//            error = ImageManipUtils.notSquare(bounds);
-//
-//            /* Find corners */
-//            edges = ImageManipUtils.subMat(edges, bounds);
-//            clean = ImageManipUtils.subMat(clean, bounds);
-//
-//            List<Point> corners = ImageManipulation.findCorners(edges);
-//            Point topLeft = corners.get(0);
-//            Point topRight = corners.get(1);
-//            Point bottomLeft = corners.get(2);
-//            Point bottomRight = corners.get(3);
-
-//            edges = ImageManipUtils.fixPerspective(topLeft, topRight, bottomLeft,
-//                    bottomRight, edges);
-//            clean = ImageManipUtils.fixPerspective(topLeft, topRight, bottomLeft,
-//                    bottomRight, clean);
-
-
-            List<MatOfPoint> contours = new ArrayList<>();
-            Mat hierarchy = new Mat();
-            Imgproc.findContours(resultImage, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
-            Mat warpedImage = new Mat();
-            int biggestPolygonIndex = getBiggestPolygonIndex(contours);
-            if (biggestPolygonIndex != 0) {
-                final MatOfPoint biggest = contours.get(biggestPolygonIndex);
-                List<Point> corners = getCornersFromPoints(biggest.toList());
-//                for (Point corner : corners) {
-//                    Imgproc.drawMarker(resultImage, corner, new Scalar(0, 191, 255, 255), 0, 20, 3);
-//                }
-
-                warpedImage = ImageManipUtils.fixPerspective(corners.get(0), corners.get(1), corners.get(2), corners.get(3), originalImage);
-                setGreenFrame(contours, biggestPolygonIndex, originalImage);
-            }
-
-            /* Give Base64 Image Back */
-            Bitmap result = ImageManipUtils.convertMatToBitmap(warpedImage);
-            String resultBase64 = ImageManipUtils.convertToBase64(result);
-            successCallback.invoke(resultBase64);
         } catch (Exception e) {
             errorCallback.invoke(e.getMessage());
         }
@@ -174,50 +148,12 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
         Scalar color = new Scalar(0, 255, 0, 255);
         Imgproc.drawContours(originalImage, contours, biggestPolygonIndex, color, 3);
     }
+}
 
-    private List<Point> getCornersFromPoints(final List<Point> points) {
-        double minX = 0;
-        double minY = 0;
-        double maxX = 0;
-        double maxY = 0;
-
-        for (Point point : points) {
-            double x = point.x;
-            double y = point.y;
-
-            if (minX == 0 || x < minX) {
-                minX = x;
-            }
-            if (minY == 0 || y < minY) {
-                minY = y;
-            }
-            if (maxX == 0 || x > maxX) {
-                maxX = x;
-            }
-            if (maxY == 0 || y > maxY) {
-                maxY = y;
-            }
-        }
-
-        List<Point> corners = new ArrayList<>(4);
-
-        corners.add(new Point(minX, minY)); // upLeft
-        corners.add(new Point(maxX, minY)); // upRight
-        corners.add(new Point(minX, maxY)); // downLeft
-        corners.add(new Point(maxX, maxY)); // downRight
-
-        return corners;
-    }
-
-    public int getBiggestPolygonIndex(List<MatOfPoint> contours) {
-        int maxIndex = 0;
-        double maxArea = 0;
-        for (int i = 0; i < contours.size(); i++) {
-            if (Imgproc.contourArea(contours.get(i)) > maxArea) {
-                maxArea = Imgproc.contourArea(contours.get(i));
-                maxIndex = i;
-            }
-        }
-        return maxIndex;
+final class ImageScanResponse extends SudokuGridResponse {
+    private String imageBase64;
+    public ImageScanResponse(int[][] grid, Mat result, String imageBase64) {
+        super(grid, result);
+        this.imageBase64 = imageBase64;
     }
 }

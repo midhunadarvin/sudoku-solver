@@ -14,6 +14,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import HomeScreen from './Screens/HomeScreen/HomeScreen';
 import CameraScreen from './Screens/CameraScreen/CameraScreen';
 import {LogBox} from 'react-native';
+import SudokuComponent from './Screens/SudokuScreen/SudokuScreen';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +30,7 @@ const App = () => {
             options={{title: 'Sudoku Solver'}}
           />
           <Stack.Screen name="Camera" component={CameraScreen} />
+          <Stack.Screen name="Sudoku" component={SudokuComponent} />
         </Stack.Navigator>
       </NavigationContainer>
     </>

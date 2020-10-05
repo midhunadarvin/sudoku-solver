@@ -246,24 +246,6 @@ public class ImageManipUtils {
         return encoded;
     }
 
-    /**
-     * returns smaller mat based on bounds
-     *
-     * @param mat
-     *            source mat
-     * @param bounds
-     *            array: [0]=left, [1]=right, [2]=top, [3]=bottom
-     * @return smaller subMat according to bounds
-     */
-    public static Mat subMat(Mat mat, int[] bounds) {
-        int left = bounds[0];
-        int right = bounds[1];
-        int top = bounds[2];
-        int bot = bounds[3];
-
-        return mat.submat(top, bot, left, right);
-    }
-
     public static Mat convertToGrayScale(Mat src) {
         Mat resultImage = new Mat();
         Imgproc.cvtColor(src, resultImage, Imgproc.COLOR_BGR2GRAY);
@@ -276,7 +258,7 @@ public class ImageManipUtils {
         return resultImage;
     }
 
-    public static Mat applyAdaptiveThreshold(Mat src) {
+    public static Mat adaptiveThreshold(Mat src) {
         Mat resultImage = new Mat();
         Imgproc.adaptiveThreshold(src, resultImage, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
         return resultImage;
@@ -288,10 +270,22 @@ public class ImageManipUtils {
         return resultImage;
     }
 
-    public static Mat applyDilation(Mat src) {
+    public static Mat dilateMat(Mat src, int size) {
         Mat resultImage = new Mat();
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_CROSS, new Size(1, 1));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_CROSS, new Size(size, size));
         Imgproc.dilate(src, resultImage, kernel);
         return resultImage;
+    }
+
+    public static Mat binaryThreshold(Mat mat) {
+        Mat resultImage = new Mat();
+        Imgproc.threshold(mat, resultImage, 128, 255, Imgproc.THRESH_BINARY);
+        return resultImage;
+    }
+
+    public static Mat bitmapToMat(Bitmap bmp) {
+        Mat mat = new Mat(bmp.getHeight(), bmp.getWidth(), CvType.CV_8UC1);
+        Utils.bitmapToMat(bmp, mat);
+        return mat;
     }
 }

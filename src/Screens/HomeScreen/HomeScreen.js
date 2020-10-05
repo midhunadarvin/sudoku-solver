@@ -1,8 +1,7 @@
 import React, {Component} from 'react';
-import {SafeAreaView, View, StatusBar, Button, Image} from 'react-native';
+import {SafeAreaView, View, StatusBar, Button} from 'react-native';
 import ImagePicker from 'react-native-image-picker';
-import {checkForBlurryImage, scanSudoku} from '../../utils/ImageUtils';
-import {showToast} from '../../utils/Toast';
+import {scanSudoku} from '../../utils/ImageUtils';
 import {styles} from './Styles';
 import FastImage from 'react-native-fast-image';
 
@@ -41,8 +40,12 @@ export default class HomeScreen extends Component {
       } else {
         // You can also display the image using data:
         this.imageBase64Data = response.data;
-        const result = await scanSudoku(this.imageBase64Data);
-        const source = {uri: `data:image/gif;base64, ${result}`};
+        const {grid, imageBase64} = JSON.parse(
+          await scanSudoku(this.imageBase64Data),
+        );
+        const source = {uri: `data:image/gif;base64, ${imageBase64}`};
+        console.log(grid);
+        this.props.navigation.navigate('Sudoku', {grid});
         this.setState({
           image: source,
         });

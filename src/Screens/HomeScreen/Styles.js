@@ -15,9 +15,10 @@ export const styles = StyleSheet.create({
     right: 0,
   },
   imageContainer: {
-    margin: 30,
+    marginTop: 30,
+    marginBottom: 10,
   },
-  image: {width: Dimensions.get('window').width, height: 500},
+  image: {width: Dimensions.get('window').width, height: 350},
   buttonContainer: {
     marginBottom: 30,
   },

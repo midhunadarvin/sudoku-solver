@@ -1,0 +1,47 @@
+.sudoku-container {
+    flex: 1;
+    height: 50vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    box-shadow: 0px 0px 5px 5px #bdc3c7;
+
+    .row {
+        display: flex;
+        flex: 1;
+    }
+
+    .cell {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #bdc3c7;
+        background: white;
+    }
+
+    .cell.fix {
+        color: #7f8c8d;
+        background: #ecf0f1;
+    }
+
+    .cell.green {
+        border: 2px solid lime;
+    }
+
+    .cell.red {
+        border: 2px solid red;
+    }
+
+    .border-left {
+        border-left: 2px solid #34495e !important;
+    }
+
+    .border-top {
+        border-top: 2px solid #34495e !important;
+    }
+}
